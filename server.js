@@ -13,15 +13,15 @@ const app = express();
 
 // --- PRODUCTION CORS CONFIGURATION ---
 const allowedOrigins = [
-  "http://localhost:5173", // Local development
-  "http://127.0.0.1:5173", // Local development (alternative)
+  "http://localhost:5173",
+  "http://127.0.0.1:5173",
   "https://blog-frontend-phi-silk.vercel.app" // Your live Vercel URL
 ];
 
 app.use(
   cors({
     origin: function (origin, callback) {
-      // Allow requests with no origin (like mobile apps, Postman, or curl)
+      // Allow requests with no origin (like mobile apps or curl)
       if (!origin) return callback(null, true);
       
       if (allowedOrigins.indexOf(origin) !== -1) {
@@ -31,21 +31,25 @@ app.use(
         callback(new Error("CORS policy: This origin is not allowed access."));
       }
     },
-    credentials: true, // Required for sending/receiving cookies and Auth headers
+    credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With", "Accept"]
   })
 );
 
-// Explicitly handle pre-flight requests (OPTIONS) for all routes
-app.options("*", cors());
+/**
+ * FIX FOR EXPRESS 5: 
+ * Express 5 uses a newer path-to-regexp version. 
+ * Simple '*' is no longer allowed. We use '(.*)' to match all paths for OPTIONS.
+ */
+app.options("(.*)", cors()); 
 // --------------------------------------
 
 // Standard Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
-// Logging Middleware (To see requests in Render logs)
+// Logging Middleware
 app.use((req, res, next) => {
   console.log(`${req.method} ${req.url} - Origin: ${req.headers.origin || "No Origin"}`);
   next();
@@ -62,13 +66,14 @@ app.get("/", (req, res) => {
 
 // Error Handling Middleware
 app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(500).json({ message: err.message || "Internal Server Error" });
+  console.error("Error detected:", err.message);
+  res.status(err.status || 500).json({ 
+    message: err.message || "Internal Server Error" 
+  });
 });
 
 const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, () => {
   console.log(`🚀 Server started on port ${PORT}`);
-  console.log(`✅ Whitelisted Origins: ${allowedOrigins.join(", ")}`);
 });
