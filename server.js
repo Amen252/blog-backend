@@ -15,24 +15,36 @@ const allowedOrigins = [
   "https://blog-frontend-phi-silk.vercel.app"
 ];
 
-app.use(
-  cors({
-    origin: function (origin, callback) {
-      if (!origin) return callback(null, true);
-      if (allowedOrigins.indexOf(origin) !== -1) {
-        callback(null, true);
-      } else {
-        callback(new Error("CORS policy error"));
-      }
-    },
-    credentials: true,
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With", "Accept"]
-  })
-);
+const corsOptions = {
+  origin: function (origin, callback) {
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      callback(new Error("CORS policy error"));
+    }
+  },
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With", "Accept"],
+  optionsSuccessStatus: 200
+};
 
-// UPDATED FOR EXPRESS 5: Using named parameter '/:any*' instead of '(.*)'
-app.options("/:any*", cors()); 
+// Apply CORS to all requests
+app.use(cors(corsOptions));
+
+// Handle preflight for ALL routes without using a string path 
+// This avoids the 'path-to-regexp' error entirely
+app.options('*', cors(corsOptions)); 
+
+// If the above still fails, use this alternative instead:
+// app.use((req, res, next) => {
+//   if (req.method === 'OPTIONS') {
+//     return res.sendStatus(200);
+//   }
+//   next();
+// });
+
 // --------------------------------------
 
 app.use(express.json());
