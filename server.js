@@ -30,26 +30,18 @@ const corsOptions = {
   optionsSuccessStatus: 200
 };
 
-// Apply CORS to all requests
+// 1. Apply CORS to all routes
 app.use(cors(corsOptions));
 
-// Handle preflight for ALL routes without using a string path 
-// This avoids the 'path-to-regexp' error entirely
-app.options('*', cors(corsOptions)); 
-
-// If the above still fails, use this alternative instead:
-// app.use((req, res, next) => {
-//   if (req.method === 'OPTIONS') {
-//     return res.sendStatus(200);
-//   }
-//   next();
-// });
-
+// 2. FIX FOR EXPRESS 5: Handle pre-flight using a NAMED wildcard
+// Instead of '*', we use '/*path'
+app.options("/*path", cors(corsOptions)); 
 // --------------------------------------
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
+// Routes
 app.use("/api/posts", require("./routes/postRoutes"));
 app.use("/api/auth", require("./routes/authRoutes"));
 
